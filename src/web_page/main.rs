@@ -34,11 +34,11 @@ for (index, meal) in meals.keys().enumerate() {
 
 println!("\nEnter the number of the meal you'd like to view ingredients for:");
 
-let mut choice = String::new();
+let mut choice to select_meal_index = String::new();
 io::stdin().read_line(&mut choice).unwrap();
 let choice: usize = choice.trim().parse().unwrap_or(0);
 
-if choice > 0 && choice <= meals.len() {
+if (1..=meal.len()). contains(&choice) {
     let meal_name = meals.keys().nth(choice - 1);
     if let Some(name) = meal_name {
         println!("\nIngredients for {}:", name);
@@ -49,5 +49,5 @@ if choice > 0 && choice <= meals.len() {
         }
     }
 } else {
-    println!("Invalid choice!");
+    println!("Invalid choice! please enter a valid meal number.");
 }
