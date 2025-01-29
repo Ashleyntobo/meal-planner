@@ -41,7 +41,7 @@ let choice: usize = choice.trim().parse().unwrap_or(0);
 if (1..=meal.len()). contains(&choice) {
     let meal_name = meals.keys().nth(choice - 1);
     if let Some(name) = meal_name {
-        println!("\nIngredients for {}:", name);
+        println!("\nIngredients for {}:", meal_name);
         if let Some(ingredients) = meals.get(name) {
             for ingredient in ingredients {
                 println!("- {}", ingredient);
