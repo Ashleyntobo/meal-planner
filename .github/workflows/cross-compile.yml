@@ -1,0 +1,32 @@
+name: Cross-Compile Rust Application
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-musl, aarch64-unknown-linux-musl]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install Cross Compilation Tools
+      run: |
+        rustup target add ${{ matrix.target }}
+        cargo install cross --git https://github.com/rust-embedded/cross
+
+    - name: Build for ${{ matrix.target }}
+      run: |
+        cross build --release --target ${{ matrix.target }}
+
+    - name: Upload Binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: meal-planner-${{ matrix.target }}
+        path: target/${{ matrix.target }}/release/meal_planner
