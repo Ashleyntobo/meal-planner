@@ -1,36 +1,59 @@
-name: Cross-Compile Rust Application
 
-on: [push, pull_request]
+name: Release Statically Linked Rust Binary
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on tags like 'v1.0.0'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-  matrix:
-    target: [x86_64-unknown-linux-musl, aarch64-unknown-linux-gnu]
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl       # Linux (musl)
+          - aarch64-unknown-linux-musl      # ARM Linux (musl)
 
+    env:
+      BINARY_NAME: commr
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
-    - name: Install Cross Compilation Tools
-      run: |
-        rustup target add ${{ matrix.target }}
-        cargo install cross --git https://github.com/rust-embedded/cross
+      - name: Install Cross
+        run: cargo install cross
 
-    - name: Build for ${{ matrix.target }}
-      run: |
-        cross build --release --target ${{ matrix.target }}
+      - name: Install Target for Cross Compilation
+        run: rustup target add ${{ matrix.target }}
 
-    - name: Upload Binary
-      uses: actions/upload-artifact@v3
-      with:
-        name: meal-planner-${{ matrix.target }}
-        path: target/${{ matrix.target }}/release/meal_planner
-        
-    - name: Install Dependencies
-      run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - name: Build with Cross
+        run: cross build --target ${{ matrix.target }} --release --verbose
+
+      - name: Create Release Archive
+        run: |
+          mkdir -p release
+
+          if [[ "${{ matrix.target }}" == *"windows"* ]]; then
+            cp target/${{ matrix.target }}/release/$BINARY_NAME.exe release/
+            zip -r ${{ matrix.target }}.zip release
+          elif [[ "${{ matrix.target }}" == *"darwin"* ]]; then
+            cp target/${{ matrix.target }}/release/$BINARY_NAME release/
+            tar -czvf ${{ matrix.target }}.tar.gz -C release $BINARY_NAME
+          else
+            cp target/${{ matrix.target }}/release/$BINARY_NAME release/
+            tar -czvf ${{ matrix.target }}.tar.gz -C release $BINARY_NAME
+          fi
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.tar.gz
+            *.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.COMMR }}
