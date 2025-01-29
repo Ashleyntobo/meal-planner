@@ -1,4 +1,4 @@
 [package]
-name = "meal-planner"
+name = "Meal-Planner"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
